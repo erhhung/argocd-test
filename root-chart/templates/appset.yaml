@@ -24,9 +24,6 @@ spec:
         path: 'app-charts/{{ "{{path.basename}}" }}'
         helm:
           valueFiles:
-            # environment-specific values for all apps
-            - '/app-configs/values-{{ .Values.env }}.yaml'
-            # environment-specific values for each app
             - '/app-configs/{{ "{{path.basename}}" }}/values-{{ .Values.env }}.yaml'
           ignoreMissingValueFiles: true
       destination:

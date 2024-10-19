@@ -24,6 +24,8 @@ spec:
         helm:
           values: |
             env: {{env}}
+          valueFiles:
+            - '/app-configs/values-{{env}}.yaml'
       destination:
         name: in-cluster
         namespace: argo
