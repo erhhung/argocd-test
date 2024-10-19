@@ -1,4 +1,4 @@
-# generate apps for each Helm app
+# generate test apps for each Helm chart
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -30,8 +30,8 @@ spec:
             - '/app-configs/{{ "{{path.basename}}" }}/values-{{ .Values.env }}.yaml'
           ignoreMissingValueFiles: true
       destination:
-        server: https://kubernetes.default.svc
-        namespace: argo
+        name: {{ .Values.destination.name }}
+        namespace: {{ .Values.destination.namespace }}
       syncPolicy:
         automated:
           prune: true
