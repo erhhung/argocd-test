@@ -1,0 +1,34 @@
+# generate root apps for each environment
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: app-of-apps
+  namespace: argo
+spec:
+  generators:
+    # https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-List/
+    - list:
+        elements:
+          - env: dev
+          - env: test
+  template:
+    metadata:
+      name: 'app-of-apps-{{env}}'
+      namespace: argo
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/erhhung/argocd-test.git
+        targetRevision: main
+        path: root-chart
+        helm:
+          values: |
+            env: {{env}}
+      destination:
+        name: in-cluster
+        namespace: argo
+      syncPolicy:
+        automated:
+          prune: true
+        syncOptions:
+          - ApplyOutOfSyncOnly=true

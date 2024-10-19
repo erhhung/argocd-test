@@ -1,0 +1,39 @@
+# generate apps for each Helm app
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ .Values.env }}-testapps
+  namespace: argo
+spec:
+  generators:
+    # https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Git/
+    - git:
+        repoURL: https://github.com/erhhung/argocd-test.git
+        revision: main
+        directories:
+          - path: app-charts/*
+  template:
+    metadata:
+      name: '{{ .Values.env }}-test{{ "{{path.basename}}" }}'
+      namespace: argo
+    spec:
+      project: default
+      source:
+        repoURL: {{ .Values.source.repoURL }}
+        targetRevision: {{ .Values.source.targetRevision }}
+        path: 'app-charts/{{ "{{path.basename}}" }}'
+        helm:
+          valueFiles:
+            # environment-specific values for all apps
+            - '../../app-configs/values-{{ .Values.env }}.yaml'
+            # environment-specific values for each app
+            - '../../app-configs/{{ "{{path.basename}}" }}/values-{{ .Values.env }}.yaml'
+          ignoreMissingValueFiles: true
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argo
+      syncPolicy:
+        automated:
+          prune: true
+        syncOptions:
+          - ApplyOutOfSyncOnly=true
