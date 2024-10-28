@@ -15,17 +15,22 @@ spec:
         files:
           - path: operators/guestbook-*.yaml
         values:
-          basename: '{{ strings.TrimSuffix (path.Base .Path) ".yaml" }}'
+          # basename is the base part of the filename without extension,
+          # which, curiously, is not exposed by the Git files generator
+          basename: '{{ index (splitList "." .path.filenameNormalized) 0 }}'
   template:
     metadata:
-      name: '{{values.basename}}'
+      name: '{{ .values.basename }}'
       namespace: argo
     spec:
       project: guestbook
       source:
         repoURL: https://github.com/erhhung/argocd-test.git
         targetRevision: main
-        path: 'operators/{{path.filename}}'
+        path: operators
+        directory:
+          # deploy a single CRD resource
+          include: '{{ .path.filename }}'
       destination:
         name: in-cluster
         namespace: apps
