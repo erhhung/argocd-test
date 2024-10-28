@@ -1,0 +1,25 @@
+apiVersion: test.erhhungyuan.com/v1alpha1
+kind: Guestbook
+metadata:
+  name: guestbook-dev
+spec:
+  affinity: {}
+  containerPort: 80
+  image:
+    pullPolicy: IfNotPresent
+    repository: gcr.io/heptio-images/ks-guestbook-demo
+    tag: 0.1
+  ingress:
+    annotations: {}
+    enabled: false
+    hosts:
+    - test.erhhungyuan.com
+    path: /
+    tls: []
+  nodeSelector: {}
+  replicaCount: 2
+  resources: {}
+  service:
+    port: 80
+    type: ClusterIP
+  tolerations: []

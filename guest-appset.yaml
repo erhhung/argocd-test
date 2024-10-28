@@ -1,0 +1,33 @@
+# this appset uses the Guestbook CRD deployed
+# by the Operator SDK project "guest-operator"
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: guestbook-apps
+  namespace: argo
+spec:
+  goTemplate: true
+  generators:
+    # https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Git/
+    - git:
+        repoURL: https://github.com/erhhung/argocd-test.git
+        revision: main
+        files:
+          - path: operators/guestbook-*.yaml
+        values:
+          basename: '{{ strings.TrimSuffix (path.Base .Path) ".yaml" }}'
+  template:
+    metadata:
+      name: '{{values.basename}}'
+      namespace: argo
+    spec:
+      project: guestbook
+      source:
+        repoURL: https://github.com/erhhung/argocd-test.git
+        targetRevision: main
+        path: 'operators/{{path.filename}}'
+      destination:
+        name: in-cluster
+        namespace: apps
+      syncPolicy:
+        automated: {}
