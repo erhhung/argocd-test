@@ -1,0 +1,63 @@
+# environments block must be defined in a
+# separate YAML document and be the first
+environments:
+  testing:
+    values: ["values-testing.yaml"]
+  staging:
+    values: ["values-staging.yaml"]
+---
+
+kubeVersion: "1.32"
+apiVersions:
+  - argoproj.io/v1alpha1
+  - argoproj.io/v1alpha1/ApplicationSet
+
+# this custom Kustomize wrapper script is baked
+# into the cmp-helmfile plugin sidecar container
+kustomizeBinary: kustomize.sh
+
+helmDefaults:
+  args: []
+  diffArgs:
+    - --take-ownership
+    - --no-hooks
+  syncArgs:
+    - --take-ownership
+  skipSchemaValidation: true
+  historyMax: 3
+  wait: true
+  waitForJobs: false
+  timeout: 600
+
+repositories:
+  - name: erhhung
+    # https://argo-cd.readthedocs.io/en/stable/user-guide/build-environment
+    url: git+{{ env "ARGOCD_APP_SOURCE_REPO_URL" }}@root-chart?ref={{ env "ARGOCD_APP_SOURCE_TARGET_REVISION" }}
+
+releases:
+  - name: {{ env "HELMFILE_RELEASE_NAME" | default (printf "app-of-apps-%s" .Environment.Name) }}
+    namespace: argocd
+    # also works: ../root-chart
+    chart: erhhung/app-of-apps
+    version: ""
+
+    values:
+      - env: {{ env "HELMFILE_ENVIRONMENT" | default .Environment.Name }}
+        source:
+          repoURL: {{ env "ARGOCD_APP_SOURCE_REPO_URL" }}
+          targetRevision: {{ env "ARGOCD_APP_SOURCE_TARGET_REVISION" }}
+
+      # must explicitly propagate environment values
+      - {{ toYaml .Environment.Values | nindent 8 }}
+
+    strategicMergePatches: []
+    jsonPatches: []
+    transformers: []
+    postRenderer: ""
+
+    suppressOutputLineRegex:
+      - "annotations:"
+      - field\.cattle\.io/
+      - wave\.pusher\.com/
+    disableValidation: true
+    atomic: true

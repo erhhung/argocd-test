@@ -2,8 +2,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: {{ .Values.env }}-testapps
-  namespace: argo
+  name: {{ .Values.env }}-apps
+  namespace: argocd
 spec:
   generators:
     # https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Git/
@@ -14,17 +14,19 @@ spec:
           - path: app-charts/*
   template:
     metadata:
-      name: '{{ .Values.env }}-test{{ "{{path.basename}}" }}'
-      namespace: argo
+      # {\{ ... }\} with    space padding is Helm    templating
+      # {\{...}\}   without space padding is Argo CD templating
+      name: {{ .Values.env }}-{{ "{{path.basename}}" }}
+      namespace: argocd
     spec:
-      project: default
+      project: homelab
       source:
         repoURL: {{ .Values.source.repoURL }}
         targetRevision: {{ .Values.source.targetRevision }}
-        path: 'app-charts/{{ "{{path.basename}}" }}'
+        path: app-charts/{{ "{{path.basename}}" }}
         helm:
           valueFiles:
-            - '/app-configs/{{ "{{path.basename}}" }}/values-{{ .Values.env }}.yaml'
+            - /app-values/{{ "{{path.basename}}" }}/values-{{ .Values.env }}.yaml
           ignoreMissingValueFiles: true
       destination:
         name: {{ .Values.destination.name }}
@@ -33,4 +35,5 @@ spec:
         automated:
           prune: true
         syncOptions:
+          - CreateNamespace=true
           - ApplyOutOfSyncOnly=true

@@ -2,6 +2,8 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+env: "" # set by root-appset.yaml
+
 source:
   repoURL: https://github.com/erhhung/argocd-test.git
   targetRevision: main

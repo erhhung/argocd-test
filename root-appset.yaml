@@ -3,34 +3,42 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: app-of-apps
-  namespace: argo
+  namespace: argocd
 spec:
   generators:
-    # https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-List/
-    - list:
-        elements:
-          - env: dev
-          - env: test
+    # https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Cluster
+    - clusters:
+        selector:
+          matchLabels:
+            provider: vcluster
   template:
     metadata:
-      name: 'app-of-apps-{{env}}'
-      namespace: argo
+      # [] notation is not supported in templating
+      # (e.g. {{metadata.labels["environment"]}} )
+      name: app-of-apps-{{metadata.labels.environment}}
+      namespace: argocd
     spec:
-      project: default
+      project: homelab
       source:
         repoURL: https://github.com/erhhung/argocd-test.git
         targetRevision: main
-        path: root-chart
-        helm:
-          values: |
-            env: {{env}}
-          valueFiles:
-            - '/app-configs/values-{{env}}.yaml'
+        path: root-helmfile
+        # https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins#using-environment-variables-in-your-plugin
+        plugin:
+          name: helmfile
+          # HELMFILE_FILE
+          # HELMFILE_ENVIRONMENT
+          # HELMFILE_RELEASE_NAME
+          # HELMFILE_SELECTOR
+          env:
+            - name: HELMFILE_ENVIRONMENT
+              value: '{{metadata.labels.environment}}'
       destination:
         name: in-cluster
-        namespace: argo
+        namespace: argocd
       syncPolicy:
         automated:
           prune: true
+        # https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options
         syncOptions:
           - ApplyOutOfSyncOnly=true

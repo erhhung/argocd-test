@@ -1,3 +1,3 @@
 destination:
-  name: do-sfo2-k8s-basic
+  name: testing
   namespace: apps
