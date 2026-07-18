@@ -1,3 +1,3 @@
 destination:
-  name: testing
+  name: test
   namespace: apps
